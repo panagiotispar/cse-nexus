@@ -1,0 +1,85 @@
+# Χτίζει την εφαρμογή και δημοσιεύει release στο GitHub, όταν ανεβάσεις tag της μορφής v1.2.3
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:      # χειροκίνητη δοκιμή του build (χωρίς να δημιουργεί release)
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - name: Λήψη κώδικα
+        uses: actions/checkout@v6
+
+      - name: Εγκατάσταση .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Εύρεση έργου και έκδοσης
+        id: info
+        shell: pwsh
+        run: |
+          $proj = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } | Select-Object -First 1
+          if (-not $proj) { throw 'Δεν βρέθηκε αρχείο .csproj' }
+          $ver = ('${{ github.ref_name }}'.TrimStart('v', 'V') -split '[-+]')[0]
+          if ($ver -notmatch '^\d+\.\d+\.\d+$') { $ver = '0.0.0' }
+          "proj=$($proj.FullName)" >> $env:GITHUB_OUTPUT
+          "version=$ver" >> $env:GITHUB_OUTPUT
+          Write-Host "Έργο: $($proj.FullName)  |  Έκδοση: $ver"
+
+      - name: Build (self-contained, ένα εκτελέσιμο)
+        shell: pwsh
+        run: |
+          dotnet publish "${{ steps.info.outputs.proj }}" `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:DebugType=None -p:DebugSymbols=false `
+            -p:Version=${{ steps.info.outputs.version }} `
+            -o publish
+
+      - name: Έλεγχος ότι το πακέτο είναι πλήρες
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem publish -Filter *.exe
+          if (-not $exe) { throw 'Δεν δημιουργήθηκε εκτελέσιμο (.exe) στον φάκελο publish' }
+          foreach ($f in 'schedule.html', 'focus.html', 'notes.html') {
+            if (-not (Test-Path "publish\$f")) { throw "Λείπει το $f από το πακέτο. Έλεγξε ότι έχει CopyToOutputDirectory στο .csproj" }
+          }
+          Write-Host "Εκτελέσιμο: $($exe.Name) ($([math]::Round($exe.Length / 1MB, 1)) MB). Όλα τα αρχεία υπάρχουν."
+
+      - name: Πακετάρισμα
+        shell: pwsh
+        run: |
+          $zip = "UOI-Study-Hub-${{ github.ref_name }}-win-x64.zip"
+          Compress-Archive -Path "publish\*" -DestinationPath $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  $zip" | Out-File -FilePath SHA256SUMS.txt -Encoding ascii
+          Get-ChildItem publish | Select-Object Name, Length | Format-Table | Out-String | Write-Host
+
+      - name: Δημοσίευση release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            UOI-Study-Hub-*.zip
+            SHA256SUMS.txt
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+      - name: Αποθήκευση build (μόνο για χειροκίνητες δοκιμές)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-build
+          path: |
+            UOI-Study-Hub-*.zip
+            SHA256SUMS.txt

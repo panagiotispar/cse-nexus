@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<link href='https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap' rel='stylesheet'>
+<style>
+html, body { margin: 0; padding: 0; background: #05070a; color: #bdc3c7; font-family: 'Share Tech Mono', Consolas, monospace; font-size: 13px; }
+body { padding: 18px 22px 40px 22px; }
+#next { background: #0d1520; border: 1px solid #1f2d3d; border-left: 4px solid #00ffcc; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; }
+#next .k { color: #7f8c8d; font-size: 11px; letter-spacing: 2px; }
+#next .v { color: #ecf0f1; font-size: 17px; margin-top: 4px; }
+#next .v b { color: #00ffcc; }
+#next .s { color: #7f8c8d; margin-top: 3px; }
+.bar { margin-bottom: 10px; }
+.lbl { color: #7f8c8d; font-size: 11px; letter-spacing: 2px; margin-right: 8px; }
+.pill { display: inline-block; cursor: pointer; background: #0d1520; border: 1px solid #1f2d3d; color: #bdc3c7; border-radius: 999px; padding: 6px 14px; margin: 0 6px 6px 0; }
+.pill:hover { border-color: #00ffcc; color: #fff; }
+.pill.on { background: #00ffcc; border-color: #00ffcc; color: #05070a; font-weight: bold; }
+.cnt { color: #7f8c8d; margin-left: 8px; }
+#chips { margin-bottom: 18px; }
+.chip { display: inline-block; cursor: pointer; border-radius: 8px; padding: 5px 10px; margin: 0 6px 6px 0; border: 1px solid #1f2d3d; background: #0a0e17; color: #5d6d7e; }
+.chip.on { color: #ecf0f1; }
+.chip small { color: #7f8c8d; margin-left: 4px; }
+.chip.on small { color: #bdc3c7; }
+.chip .dot { display: inline-block; width: 7px; height: 7px; border-radius: 4px; background: #ff9f43; margin-left: 6px; }
+.empty { color: #7f8c8d; text-align: center; padding: 50px 10px; border: 1px dashed #34495e; border-radius: 10px; }
+
+/* GRID */
+#gridwrap { position: relative; margin-left: 52px; }
+#view { overflow-x: auto; overflow-y: hidden; }
+.dh { position: absolute; top: 0; height: 28px; text-align: center; color: #ecf0f1; font-weight: bold; letter-spacing: 2px; line-height: 28px; background: #142132; border-top: 2px solid #34495e; }
+.dh.alt { background: #0e1824; }
+.dh.today { color: #05070a; background: #00ffcc; border-top-color: #00ffcc; }
+.sh { position: absolute; top: 30px; height: 18px; text-align: center; font-size: 10px; line-height: 18px; overflow: hidden; }
+.dbg { position: absolute; }
+.dbg.a { background: rgba(255,255,255,0.045); }
+.dbg.b { background: rgba(255,255,255,0.0); }
+.dbg.today { background: rgba(0,255,204,0.07); }
+.dsep { position: absolute; width: 2px; background: rgba(255,255,255,0.28); }
+.csep { position: absolute; width: 1px; background: rgba(255,255,255,0.06); }
+.compact .ev .c { font-size: 11px; }
+.compact .ev .t { font-size: 10px; }
+.compact .ev .r { font-size: 9px; }
+.hl { position: absolute; left: -52px; width: 48px; text-align: right; color: #5d6d7e; font-size: 11px; }
+.hline { position: absolute; left: 0; right: 0; height: 1px; background: #121c28; }
+.ev { position: absolute; }
+.ev .in { position: absolute; left: 2px; right: 2px; top: 1px; bottom: 1px; border-radius: 6px; overflow: hidden; padding: 4px 6px; border-left: 3px solid #00ffcc; background: #0f2a33; }
+.ev .c { color: #ecf0f1; font-weight: bold; font-size: 12px; }
+.ev .tm { color: #7f8c8d; font-weight: normal; font-size: 10px; }
+.ev .t { color: #bdc3c7; font-size: 11px; margin-top: 1px; }
+.ev .r { color: #7f8c8d; font-size: 10px; margin-top: 1px; }
+.ev .tag { display: inline-block; background: #f1c40f; color: #05070a; font-size: 9px; border-radius: 3px; padding: 0 4px; margin-left: 4px; }
+.ev .od { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 4px; background: #ff9f43; }
+.nowline { position: absolute; left: 0; right: 0; height: 2px; background: #ff4757; z-index: 5; }
+
+/* AGENDA */
+.day { background: #0a0e17; border: 1px solid #1a2536; border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.day .h { padding: 10px 16px; color: #ecf0f1; border-bottom: 1px solid #1a2536; letter-spacing: 1px; }
+.day .h.today { color: #00ffcc; }
+.day .h span { color: #7f8c8d; font-size: 11px; margin-left: 10px; }
+.row { padding: 9px 16px; border-bottom: 1px solid #101923; }
+.row:last-child { border-bottom: none; }
+.row .tm { display: inline-block; width: 112px; color: #7f8c8d; }
+.row .c { display: inline-block; width: 70px; font-weight: bold; }
+.row .t { color: #ecf0f1; }
+.row .r { color: #7f8c8d; margin-left: 10px; }
+.badge { display: inline-block; font-size: 10px; border-radius: 4px; padding: 1px 6px; margin-left: 8px; }
+.badge.owed { background: rgba(255,159,67,0.18); color: #ff9f43; border: 1px solid #ff9f43; }
+.badge.tut { background: rgba(241,196,15,0.18); color: #f1c40f; border: 1px solid #f1c40f; }
+.dbox { display: inline-block; width: 62px; text-align: center; vertical-align: top; margin-right: 14px; }
+.dbox .n { color: #ecf0f1; font-size: 26px; line-height: 28px; }
+.dbox .m { color: #7f8c8d; font-size: 11px; }
+.exday { background: #0a0e17; border: 1px solid #1a2536; border-radius: 10px; margin-bottom: 12px; padding: 12px 16px; }
+.exday .in { display: inline-block; vertical-align: top; width: 85%; }
+.exday .hd { color: #7f8c8d; font-size: 11px; margin-bottom: 6px; }
+.exrow { padding: 5px 0; }
+.exrow .tm { display: inline-block; width: 112px; color: #7f8c8d; }
+.exrow .c { display: inline-block; width: 70px; font-weight: bold; }
+.legend { margin-top: 18px; color: #7f8c8d; font-size: 11px; }
+.legend b { color: #bdc3c7; }
+</style>
+</head>
+<body>
+<div id='next'></div>
+<div class='bar' id='bar'></div>
+<div id='chips'></div>
+<div id='view'></div>
+<div class='legend' id='legend'></div>
+
+<script>
+var DATA = __DATA__;
+var CURR = __CURR__;
+var OWED = __OWED__;
+var STATE = __STATE__;
+var DAYS = ['Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή'];
+var DAYS_SHORT = ['Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ'];
+var MONTHS = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
+var HOUR_PX = 58;
+var chipsOpen = false;
+
+if (!STATE || !STATE.mode) { STATE = { mode: OWED.length ? 'owed' : 'all', codes: [], layout: 'grid' }; }
+if (!STATE.codes) STATE.codes = [];
+if (!STATE.layout) STATE.layout = 'grid';
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;'); }
+function toMin(t) { var p = t.split(':'); return parseInt(p[0], 10) * 60 + parseInt(p[1], 10); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function rgba(hex, a) {
+  var n = parseInt(hex.substr(1), 16);
+  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+var YEAR_COL = ['#ff6b81', '#1dd1a1', '#54a0ff', '#ff9ff3', '#f1c40f'];
+var YEAR_LBL = ['1ο έτος', '2ο έτος', '3ο έτος', '4ο έτος', 'Επιλογής'];
+/* 0..3 = 1ο..4ο έτος (το ψηφίο του κωδικού είναι το εξάμηνο), 4 = επιλογής (ΜΥΕ) */
+function colKeyOf(code) {
+  if (code.indexOf('ΜΥΕ') === 0) return 4;
+  var d = parseInt(code.charAt(3), 10);
+  if (isNaN(d)) return 4;
+  return Math.min(3, Math.ceil(d / 2) - 1);
+}
+function colorOf(code) { return YEAR_COL[colKeyOf(code)]; }
+function titleOf(s) { return (CURR[s.c] && CURR[s.c].t) ? CURR[s.c].t : s.t; }
+function isOwed(code) { return OWED.indexOf(code) >= 0; }
+function isVisible(code) {
+  if (STATE.mode === 'all') return true;
+  if (STATE.mode === 'none') return false;
+  if (STATE.mode === 'owed') return isOwed(code);
+  return STATE.codes.indexOf(code) >= 0;
+}
+function parseIso(iso) { var p = iso.split('-'); return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10)); }
+function fmtIso(iso) { var d = parseIso(iso); return DAYS[(d.getDay() + 6) % 7] + ' ' + d.getDate() + '/' + (d.getMonth() + 1); }
+function fmtTerm(iso) { var d = parseIso(iso); return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear(); }
+function countdown(ms) {
+  var m = Math.round(ms / 60000);
+  if (m < 60) return m + 'λ';
+  var h = Math.floor(m / 60);
+  if (h < 24) return h + 'ω ' + (m % 60) + 'λ';
+  var d = Math.floor(h / 24);
+  return d + (d === 1 ? ' ημέρα' : ' ημέρες') + ' ' + (h % 24) + 'ω';
+}
+function save() {
+  try {
+    if (window.chrome && window.chrome.webview) {
+      window.chrome.webview.postMessage(JSON.stringify({ type: 'sched', value: { mode: STATE.mode, codes: STATE.codes, layout: STATE.layout } }));
+    }
+  } catch (e) { }
+}
+
+/* ---------- ΕΠΟΜΕΝΟ ---------- */
+function renderNext(list) {
+  var now = new Date(), html = '', k = '', v = '', s = '';
+  if (DATA.kind === 'exams') {
+    var best = null, i, todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    for (i = 0; i < list.length; i++) {
+      var dt = parseIso(list[i].dt); dt.setHours(parseInt(list[i].s.split(':')[0], 10), 0, 0, 0);
+      var end = parseIso(list[i].dt); end.setHours(parseInt(list[i].e.split(':')[0], 10), 0, 0, 0);
+      if (end > now && (!best || dt < best.dt)) best = { s: list[i], dt: dt };
+    }
+    k = 'ΕΠΟΜΕΝΗ ΕΞΕΤΑΣΗ';
+    if (best) {
+      v = '<b>' + esc(best.s.c) + '</b> ' + esc(titleOf(best.s));
+      s = fmtIso(best.s.dt) + ' · ' + best.s.s + '-' + best.s.e + ' · ' + (best.dt > now ? 'σε ' + countdown(best.dt - now) : 'ΕΞΕΤΑΖΕΤΑΙ ΤΩΡΑ');
+    } else { v = list.length ? 'Η εξεταστική έχει ολοκληρωθεί' : 'Καμία εξέταση με τα τρέχοντα φίλτρα'; }
+  } else {
+    var ts = DATA.termStart ? parseIso(DATA.termStart) : null, te = DATA.termEnd ? parseIso(DATA.termEnd) : null;
+    k = 'ΕΠΟΜΕΝΟ ΜΑΘΗΜΑ';
+    var cur = null, nxt = null, off, j;
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+    for (off = 0; off < 8 && !nxt; off++) {
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off);
+      var di = (d.getDay() + 6) % 7;
+      if (di > 4) continue;
+      for (j = 0; j < list.length; j++) {
+        if (list[j].d !== di) continue;
+        var a = toMin(list[j].s), b = toMin(list[j].e);
+        if (off === 0 && a <= nowMin && nowMin < b) { cur = list[j]; continue; }
+        var when = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(a / 60), a % 60);
+        if (when > now && (!nxt || when < nxt.when)) nxt = { s: list[j], when: when };
+      }
+    }
+    if (te && now > new Date(te.getFullYear(), te.getMonth(), te.getDate() + 1)) { v = 'Το εξάμηνο έχει λήξει'; s = 'Λήξη μαθημάτων: ' + fmtTerm(DATA.termEnd); }
+    else if (cur) { v = 'ΤΩΡΑ: <b>' + esc(cur.c) + '</b> ' + esc(titleOf(cur)); s = cur.s + '-' + cur.e + (cur.r ? ' · ' + esc(cur.r) : ''); }
+    else if (nxt) {
+      v = '<b>' + esc(nxt.s.c) + '</b> ' + esc(titleOf(nxt.s));
+      s = DAYS[nxt.s.d] + ' ' + nxt.s.s + '-' + nxt.s.e + (nxt.s.r ? ' · ' + esc(nxt.s.r) : '') + ' · σε ' + countdown(nxt.when - now);
+    } else { v = 'Δεν υπάρχει επόμενο μάθημα με τα τρέχοντα φίλτρα'; }
+    if (ts && now < ts) { s = 'Έναρξη μαθημάτων: ' + fmtTerm(DATA.termStart) + (s ? ' · ' + s : ''); }
+  }
+  document.getElementById('next').innerHTML = '<div class="k">' + k + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '');
+}
+
+/* ---------- ΜΠΑΡΑ & ΦΙΛΤΡΑ ---------- */
+function pill(attr, val, label, on) { return '<span class="pill' + (on ? ' on' : '') + '" data-' + attr + '="' + val + '">' + label + '</span>'; }
+function renderBar(shown, total) {
+  var h = '<span class="lbl">ΕΜΦΑΝΙΣΗ</span>' +
+    pill('mode', 'owed', 'Όσα μου λείπουν', STATE.mode === 'owed') +
+    pill('mode', 'all', 'Όλα', STATE.mode === 'all') +
+    pill('mode', 'none', 'Κανένα', STATE.mode === 'none');
+  if (DATA.kind !== 'exams') {
+    h += '<span class="lbl" style="margin-left:14px;">ΠΡΟΒΟΛΗ</span>' +
+      pill('layout', 'grid', '▦ Πλέγμα', STATE.layout === 'grid') +
+      pill('layout', 'agenda', '☰ Ατζέντα', STATE.layout === 'agenda');
+  }
+  h += pill('chips', '1', (chipsOpen ? '▾' : '▸') + ' Επιλογή μαθημάτων', chipsOpen);
+  h += '<span class="cnt">' + shown + ' / ' + total + ' μαθήματα</span>';
+  document.getElementById('bar').innerHTML = h;
+}
+function uniqueCodes() {
+  var seen = {}, out = [], i;
+  for (i = 0; i < DATA.sessions.length; i++) { var c = DATA.sessions[i].c; if (!seen[c]) { seen[c] = DATA.sessions[i]; out.push(c); } }
+  out.sort();
+  return { codes: out, first: seen };
+}
+function renderChips() {
+  var u = uniqueCodes(), h = '', i;
+  for (i = 0; i < u.codes.length; i++) {
+    var c = u.codes[i], on = isVisible(c), col = colorOf(c);
+    var t = (CURR[c] && CURR[c].t) ? CURR[c].t : u.first[c].t;
+    if (t.length > 22) t = t.substr(0, 21) + '…';
+    h += '<span class="chip' + (on ? ' on' : '') + '" data-code="' + c + '" style="' + (on ? 'border-color:' + col + ';background:' + rgba(col, 0.14) + ';' : '') + '">' + esc(c) + '<small>' + esc(t) + '</small>' + (isOwed(c) ? '<i class="dot"></i>' : '') + '</span>';
+  }
+  document.getElementById('chips').innerHTML = chipsOpen ? h : '';
+  return u.codes.length;
+}
+
+/* ---------- ΠΛΕΓΜΑ ---------- */
+function layoutDay(list) {
+  list.sort(function (a, b) { return (toMin(a.s) - toMin(b.s)) || (toMin(b.e) - toMin(a.e)); });
+  var cur = null, curEnd = -1, i, l;
+  for (i = 0; i < list.length; i++) {
+    var m = toMin(list[i].s), e = toMin(list[i].e);
+    if (!cur || m >= curEnd) { cur = { lanes: [] }; curEnd = -1; }
+    var lane = -1;
+    for (l = 0; l < cur.lanes.length; l++) { if (cur.lanes[l] <= m) { lane = l; break; } }
+    if (lane < 0) { lane = cur.lanes.length; cur.lanes.push(0); }
+    cur.lanes[lane] = e;
+    list[i]._lane = lane; list[i]._cl = cur;
+    if (e > curEnd) curEnd = e;
+  }
+}
+/* Μαθήματα: 4 στήλες (1ο-4ο έτος) + στήλες επιλογής (όσες χρειάζονται για να μη συγκρούονται) */
+function yearDay(d, list) {
+  var yl = [[], [], [], []], el = [], items = [], nElec = 1, i, k;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].d !== d) continue;
+    k = colKeyOf(list[i].c);
+    if (k === 4) el.push(list[i]); else yl[k].push(list[i]);
+  }
+  for (k = 0; k < 4; k++) {
+    layoutDay(yl[k]);
+    for (i = 0; i < yl[k].length; i++) items.push({ s: yl[k][i], col: k, lane: yl[k][i]._lane, lanes: yl[k][i]._cl.lanes.length });
+  }
+  layoutDay(el);
+  for (i = 0; i < el.length; i++) { if (el[i]._lane + 1 > nElec) nElec = el[i]._lane + 1; }
+  for (i = 0; i < el.length; i++) items.push({ s: el[i], col: 4 + el[i]._lane, lane: 0, lanes: 1 });
+  var labels = ['1ο', '2ο', '3ο', '4ο'], colors = [YEAR_COL[0], YEAR_COL[1], YEAR_COL[2], YEAR_COL[3]];
+  for (i = 0; i < nElec; i++) { labels.push('Επιλ.'); colors.push(YEAR_COL[4]); }
+  return { cols: 4 + nElec, items: items, labels: labels, colors: colors };
+}
+/* Εργαστήρια: μία στήλη ανά ημέρα, οι συγκρούσεις μοιράζονται σε λωρίδες */
+function laneDay(d, list) {
+  var dl = [], items = [], i;
+  for (i = 0; i < list.length; i++) { if (list[i].d === d) dl.push(list[i]); }
+  layoutDay(dl);
+  for (i = 0; i < dl.length; i++) items.push({ s: dl[i], col: 0, lane: dl[i]._lane, lanes: dl[i]._cl.lanes.length });
+  return { cols: 1, items: items, labels: null, colors: null };
+}
+function renderGrid(list) {
+  var useYears = (DATA.kind === 'lectures');
+  var all = DATA.sessions, minM = 24 * 60, maxM = 0, i, d;
+  for (i = 0; i < all.length; i++) { minM = Math.min(minM, toMin(all[i].s)); maxM = Math.max(maxM, toMin(all[i].e)); }
+  var startH = Math.floor(minM / 60), endH = Math.ceil(maxM / 60);
+  var HEAD = useYears ? 52 : 34, H = (endH - startH) * HOUR_PX;
+  var now = new Date(), todayIdx = (now.getDay() + 6) % 7;
+
+  var days = [], total = 0;
+  for (d = 0; d < 5; d++) {
+    var info = useYears ? yearDay(d, list) : laneDay(d, list);
+    info.off = total; total += info.cols; days.push(info);
+  }
+  var unit = 100 / total;
+
+  var h = '<div id="gridwrap" class="' + (useYears ? 'compact' : '') + '" style="height:' + (H + HEAD) + 'px;' + (useYears ? 'min-width:1500px;' : '') + '">';
+  for (d = 0; d < 5; d++) {
+    var di = days[d], left = di.off * unit, width = di.cols * unit, isT = (d === todayIdx);
+    h += '<div class="dbg ' + (isT ? 'today' : (d % 2 ? 'b' : 'a')) + '" style="left:' + left + '%;width:' + width + '%;top:' + HEAD + 'px;height:' + H + 'px;"></div>';
+    h += '<div class="dh' + (isT ? ' today' : (d % 2 ? ' alt' : '')) + '" style="left:' + left + '%;width:' + width + '%;">' + DAYS[d].toUpperCase() + '</div>';
+    if (di.labels) {
+      for (i = 0; i < di.labels.length; i++) {
+        h += '<div class="sh" style="left:' + ((di.off + i) * unit) + '%;width:' + unit + '%;color:' + di.colors[i] + ';">' + di.labels[i] + '</div>';
+        if (i > 0) h += '<div class="csep" style="left:' + ((di.off + i) * unit) + '%;top:30px;height:' + (H + HEAD - 30) + 'px;"></div>';
+      }
+    }
+  }
+  for (i = 0; i <= endH - startH; i++) {
+    h += '<div class="hline" style="top:' + (HEAD + i * HOUR_PX) + 'px;"></div>';
+    if (i < endH - startH) h += '<div class="hl" style="top:' + (HEAD + i * HOUR_PX + 2) + 'px;">' + pad(startH + i) + ':00</div>';
+  }
+  /* έντονα διαχωριστικά ανάμεσα στις ημέρες */
+  for (d = 0; d < 5; d++) h += '<div class="dsep" style="left:' + (days[d].off * unit) + '%;top:0;height:' + (H + HEAD) + 'px;"></div>';
+  h += '<div class="dsep" style="right:0;top:0;height:' + (H + HEAD) + 'px;"></div>';
+
+  for (d = 0; d < 5; d++) {
+    var dd = days[d], j;
+    for (j = 0; j < dd.items.length; j++) {
+      var it = dd.items[j], s = it.s, a = toMin(s.s), b = toMin(s.e);
+      var top = HEAD + (a - startH * 60) / 60 * HOUR_PX, hh = (b - a) / 60 * HOUR_PX;
+      var w = unit / it.lanes, lft = (dd.off + it.col) * unit + it.lane * w, col = colorOf(s.c);
+      var tip = s.c + ' ' + titleOf(s) + ' · ' + s.s + '-' + s.e + (s.r ? ' · ' + s.r : '') + (useYears ? ' · ' + YEAR_LBL[colKeyOf(s.c)] : '');
+      h += '<div class="ev" style="top:' + top + 'px;height:' + hh + 'px;left:' + lft + '%;width:' + w + '%;" title="' + esc(tip) + '">' +
+        '<div class="in" style="border-left-color:' + col + ';background:' + rgba(col, 0.18) + ';">' +
+        '<div class="c">' + esc(s.c) + (s.n ? '<span class="tag">' + esc(s.n) + '</span>' : '') + (useYears ? '' : '<span class="tm"> ' + s.s + '-' + s.e + '</span>') + '</div>' +
+        '<div class="t">' + esc(titleOf(s)) + '</div>' + (s.r ? '<div class="r">' + esc(s.r) + '</div>' : '') +
+        (isOwed(s.c) ? '<i class="od"></i>' : '') + '</div></div>';
+    }
+  }
+  var nowMin = now.getHours() * 60 + now.getMinutes();
+  if (todayIdx < 5 && nowMin >= startH * 60 && nowMin <= endH * 60) {
+    h += '<div class="nowline" style="top:' + (HEAD + (nowMin - startH * 60) / 60 * HOUR_PX) + 'px;left:' + (days[todayIdx].off * unit) + '%;width:' + (days[todayIdx].cols * unit) + '%;"></div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+/* ---------- ΑΤΖΕΝΤΑ ---------- */
+function renderAgenda(list) {
+  var h = '', d, j, todayIdx = (new Date().getDay() + 6) % 7;
+  for (d = 0; d < 5; d++) {
+    var dl = [];
+    for (j = 0; j < list.length; j++) { if (list[j].d === d) dl.push(list[j]); }
+    dl.sort(function (a, b) { return toMin(a.s) - toMin(b.s); });
+    h += '<div class="day"><div class="h' + (d === todayIdx ? ' today' : '') + '">' + DAYS[d].toUpperCase() + '<span>' + dl.length + ' συνεδρίες</span></div>';
+    if (!dl.length) h += '<div class="row" style="color:#5d6d7e;">—</div>';
+    for (j = 0; j < dl.length; j++) {
+      var s = dl[j], col = colorOf(s.c);
+      h += '<div class="row"><span class="tm">' + s.s + '-' + s.e + '</span><span class="c" style="color:' + col + ';">' + esc(s.c) + '</span><span class="t">' + esc(titleOf(s)) + '</span>' +
+        (s.r ? '<span class="r">' + esc(s.r) + '</span>' : '') + (s.n ? '<span class="badge tut">' + esc(s.n) + '</span>' : '') + (isOwed(s.c) ? '<span class="badge owed">ΜΟΥ ΛΕΙΠΕΙ</span>' : '') + '</div>';
+    }
+    h += '</div>';
+  }
+  return h;
+}
+
+/* ---------- ΕΞΕΤΑΣΤΙΚΗ ---------- */
+function renderExams(list) {
+  var byDate = {}, dates = [], i, now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  for (i = 0; i < list.length; i++) { var k = list[i].dt; if (!byDate[k]) { byDate[k] = []; dates.push(k); } byDate[k].push(list[i]); }
+  dates.sort();
+  var h = '';
+  for (i = 0; i < dates.length; i++) {
+    var d = parseIso(dates[i]), items = byDate[dates[i]], j, diff = Math.round((d - today) / 86400000);
+    items.sort(function (a, b) { return toMin(a.s) - toMin(b.s); });
+    var when = diff === 0 ? 'ΣΗΜΕΡΑ' : diff === 1 ? 'αύριο' : diff > 1 ? 'σε ' + diff + ' ημέρες' : 'πριν ' + (-diff) + ' ημέρες';
+    h += '<div class="exday" style="' + (diff < 0 ? 'opacity:0.45;' : '') + '"><div class="dbox"><div class="n">' + d.getDate() + '</div><div class="m">' + MONTHS[d.getMonth()] + ' · ' + DAYS_SHORT[(d.getDay() + 6) % 7] + '</div></div>' +
+      '<div class="in"><div class="hd">' + when + '</div>';
+    for (j = 0; j < items.length; j++) {
+      var s = items[j], col = colorOf(s.c);
+      h += '<div class="exrow"><span class="tm">' + s.s + '-' + s.e + '</span><span class="c" style="color:' + col + ';">' + esc(s.c) + '</span><span class="t">' + esc(titleOf(s)) + '</span>' + (isOwed(s.c) ? '<span class="badge owed">ΜΟΥ ΛΕΙΠΕΙ</span>' : '') + '</div>';
+    }
+    h += '</div></div>';
+  }
+  return h;
+}
+
+/* ---------- ΚΥΡΙΟ ---------- */
+function render() {
+  var list = [], i;
+  for (i = 0; i < DATA.sessions.length; i++) { if (isVisible(DATA.sessions[i].c)) list.push(DATA.sessions[i]); }
+  renderNext(list);
+  var total = renderChips();
+  var shown = 0, u = uniqueCodes(), k;
+  for (k = 0; k < u.codes.length; k++) { if (isVisible(u.codes[k])) shown++; }
+  renderBar(shown, total);
+  var html;
+  if (!list.length) {
+    html = '<div class="empty">Δεν υπάρχουν μαθήματα με τα τρέχοντα φίλτρα.<br>Διάλεξε μαθήματα από τα κουμπιά πάνω ή πάτα «Όλα».</div>';
+  } else if (DATA.kind === 'exams') { html = renderExams(list); }
+  else if (STATE.layout === 'agenda') { html = renderAgenda(list); }
+  else { html = renderGrid(list); }
+  document.getElementById('view').innerHTML = html;
+
+  var lg = '';
+  if (DATA.legend) {
+    for (var key in DATA.legend) { if (DATA.legend.hasOwnProperty(key)) lg += '<b>' + esc(key) + '</b> = ' + esc(DATA.legend[key]) + ' &nbsp;·&nbsp; '; }
+  }
+  lg += '<br>Αναγνώστηκαν ' + DATA.sessions.length + ' συνεδρίες από το PDF' + (DATA.title ? ' «' + esc(DATA.title) + '»' : '') + '.';
+  if (DATA.kind === 'lectures' && STATE.layout !== 'agenda') {
+    lg += '<br>Στήλες κάθε ημέρας: ';
+    for (var yi = 0; yi < YEAR_LBL.length; yi++) lg += '<b style="color:' + YEAR_COL[yi] + ';">' + YEAR_LBL[yi] + '</b>' + (yi < 4 ? ' · ' : '');
+    lg += ' (η 6η στήλη εμφανίζεται όταν δύο μαθήματα επιλογής συμπίπτουν)';
+  }
+  if (DATA.kind === 'labs') lg += '<br>Τα εργαστήρια ξεκινούν συνήθως αργότερα από τις διαλέξεις, σε συνεννόηση με τον διδάσκοντα.';
+  document.getElementById('legend').innerHTML = lg;
+}
+
+document.addEventListener('click', function (ev) {
+  var t = ev.target, n = 0;
+  while (t && t !== document && n < 4) {
+    if (t.getAttribute && t.getAttribute('data-mode')) { STATE.mode = t.getAttribute('data-mode'); save(); render(); return; }
+    if (t.getAttribute && t.getAttribute('data-chips')) { chipsOpen = !chipsOpen; render(); return; }
+    if (t.getAttribute && t.getAttribute('data-layout')) { STATE.layout = t.getAttribute('data-layout'); save(); render(); return; }
+    if (t.getAttribute && t.getAttribute('data-code')) {
+      var code = t.getAttribute('data-code'), cur = [], u = uniqueCodes().codes, i;
+      for (i = 0; i < u.length; i++) { if (isVisible(u[i])) cur.push(u[i]); }
+      var idx = cur.indexOf(code);
+      if (idx >= 0) cur.splice(idx, 1); else cur.push(code);
+      STATE.mode = 'custom'; STATE.codes = cur; save(); render(); return;
+    }
+    t = t.parentNode; n++;
+  }
+});
+render();
+</script>
+</body>
+</html>

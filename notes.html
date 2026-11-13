@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<link href='https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap' rel='stylesheet'>
+<style>
+:root { --ac: __ACCENT__; --acrgb: __ACCENT_RGB__; }
+html, body { margin: 0; padding: 0; background: #05070a; color: #bdc3c7; font-family: 'Share Tech Mono', Consolas, monospace; font-size: 14px; }
+body { padding: 12px 14px 20px 14px; }
+select, input[type=text], textarea { width: 100%; box-sizing: border-box; background: #0d1520; border: 1px solid #1f2d3d; color: #ecf0f1; border-radius: 8px; padding: 10px 12px; font-family: 'Share Tech Mono', Consolas, monospace; font-size: 0.95rem; outline: none; }
+select:focus, input[type=text]:focus, textarea:focus { border-color: var(--ac); }
+select { color: var(--ac); margin-bottom: 8px; }
+option, optgroup { background: #0d1520; color: #ecf0f1; }
+textarea { height: 220px; height: 34vh; min-height: 140px; resize: vertical; line-height: 1.45; }
+.sec { color: #7f8c8d; font-size: 0.74rem; letter-spacing: 2px; margin: 16px 0 7px 0; }
+.sec .pg { color: var(--ac); margin-left: 8px; }
+.sec .lnk { float: right; cursor: pointer; color: #7f8c8d; letter-spacing: 0; }
+.sec .lnk:hover { color: #e74c3c; }
+.it { padding: 7px 4px; border-bottom: 1px solid #101923; }
+.it .cb { display: inline-block; width: 22px; cursor: pointer; color: var(--ac); font-size: 1.05rem; }
+.it .tx { color: #ecf0f1; }
+.it.done .tx { color: #5d6d7e; text-decoration: line-through; }
+.it .rm { float: right; cursor: pointer; color: #5d6d7e; padding: 0 4px; }
+.it .rm:hover { color: #e74c3c; }
+.hint { color: #5d6d7e; font-size: 0.82rem; padding: 6px 2px; }
+#foot { color: #5d6d7e; font-size: 0.75rem; margin-top: 10px; text-align: right; }
+.res { padding: 9px 10px; border: 1px solid #1a2536; border-left: 3px solid var(--ac); border-radius: 8px; margin-bottom: 8px; cursor: pointer; background: #0a0e17; }
+.res:hover { background: #0d1520; }
+.res b { color: var(--ac); }
+.res .sn { color: #7f8c8d; font-size: 0.85rem; margin-top: 3px; white-space: pre-wrap; word-wrap: break-word; }
+.res mark { background: rgba(241,196,15,0.25); color: #f1c40f; }
+.hide { display: none; }
+</style>
+</head>
+<body>
+<select id='course'></select>
+<input type='text' id='q' placeholder='🔍 Αναζήτηση σε όλες τις σημειώσεις...'>
+
+<div id='results' class='hide'></div>
+
+<div id='editor'>
+  <div class='sec'>✅ ΤΙ ΠΡΕΠΕΙ ΝΑ ΔΙΑΒΑΣΩ<span class='pg' id='prog'></span><span class='lnk' id='clear'>καθαρισμός ✓</span></div>
+  <input type='text' id='newItem' placeholder='Πρόσθεσε στοιχείο και πάτα Enter...'>
+  <div id='items'></div>
+  <div class='sec'>📝 ΣΗΜΕΙΩΣΕΙΣ</div>
+  <textarea id='text' placeholder='Ελεύθερο κείμενο: SOS, ιδέες, σημεία που δεν κατάλαβες...'></textarea>
+</div>
+<div id='foot'></div>
+
+<script>
+var NOTES = __NOTES__;          // { "_": {items:[{t,d}], text, updated}, "ΜΥΥ701": {...} }
+var COURSES = __COURSES__;      // μαθήματα που σου λείπουν: [{c,t}]
+var NAMES = __NAMES__;          // όλα τα μαθήματα του προγράμματος: { code: title }
+var CUR = __LAST__;             // το μάθημα που ήταν ανοιχτό
+if (!NOTES) NOTES = {};
+if (!CUR) CUR = '_';
+var saveTimer = null;
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;'); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function post(o) { try { if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(JSON.stringify(o)); } catch (e) { } }
+/* "Διπλωμένο" κείμενο: ίδιο μήκος με το αρχικό, χωρίς τόνους και πεζά (για αναζήτηση που αγνοεί τόνους/κεφαλαία) */
+function fold(s) {
+  var out = '', i, ch;
+  for (i = 0; i < s.length; i++) {
+    ch = s.charAt(i);
+    try { if (ch.normalize) ch = ch.normalize('NFD').charAt(0); } catch (e) { }
+    out += ch.toLowerCase();
+  }
+  return out;
+}
+function note(code) {
+  if (!NOTES[code]) NOTES[code] = { items: [], text: '', updated: '' };
+  if (!NOTES[code].items) NOTES[code].items = [];
+  if (NOTES[code].text == null) NOTES[code].text = '';
+  return NOTES[code];
+}
+function hasContent(code) { var n = NOTES[code]; return !!n && ((n.items && n.items.length > 0) || (n.text && n.text.replace(/\s/g, '').length > 0)); }
+function titleOf(code) { return code === '_' ? 'Γενικές σημειώσεις' : (NAMES[code] ? NAMES[code] : ''); }
+
+/* ---------- ΕΠΙΛΟΓΗ ΜΑΘΗΜΑΤΟΣ ---------- */
+function opt(code, label) { return '<option value="' + esc(code) + '">' + esc(label) + (hasContent(code) ? '  ●' : '') + '</option>'; }
+function buildSelect() {
+  var h = opt('_', '📌 Γενικές σημειώσεις'), i, k, seen = { '_': true };
+  if (COURSES.length) {
+    h += '<optgroup label="Όσα μου λείπουν">';
+    for (i = 0; i < COURSES.length; i++) { h += opt(COURSES[i].c, COURSES[i].c + ' · ' + COURSES[i].t); seen[COURSES[i].c] = true; }
+    h += '</optgroup>';
+  }
+  var withNotes = [];
+  for (k in NOTES) { if (NOTES.hasOwnProperty(k) && !seen[k] && hasContent(k)) withNotes.push(k); }
+  withNotes.sort();
+  if (withNotes.length) {
+    h += '<optgroup label="Με σημειώσεις">';
+    for (i = 0; i < withNotes.length; i++) { h += opt(withNotes[i], withNotes[i] + (titleOf(withNotes[i]) ? ' · ' + titleOf(withNotes[i]) : '')); seen[withNotes[i]] = true; }
+    h += '</optgroup>';
+  }
+  var rest = [];
+  for (k in NAMES) { if (NAMES.hasOwnProperty(k) && !seen[k]) rest.push(k); }
+  rest.sort();
+  if (rest.length) {
+    h += '<optgroup label="Όλα τα μαθήματα">';
+    for (i = 0; i < rest.length; i++) h += opt(rest[i], rest[i] + ' · ' + NAMES[rest[i]]);
+    h += '</optgroup>';
+  }
+  if (!seen[CUR] && CUR !== '_' && !NAMES[CUR]) h += opt(CUR, CUR);   // κωδικός που δεν υπάρχει στη λίστα
+  $('course').innerHTML = h;
+  $('course').value = CUR;
+}
+
+/* ---------- ΕΠΕΞΕΡΓΑΣΤΗΣ ---------- */
+function renderItems() {
+  var n = note(CUR), h = '', i, done = 0;
+  for (i = 0; i < n.items.length; i++) {
+    var it = n.items[i]; if (it.d) done++;
+    h += '<div class="it' + (it.d ? ' done' : '') + '"><span class="cb" data-i="' + i + '">' + (it.d ? '☑' : '☐') + '</span><span class="tx">' + esc(it.t) + '</span><span class="rm" data-rm="' + i + '" title="Διαγραφή">✕</span></div>';
+  }
+  $('items').innerHTML = h || '<div class="hint">Κανένα στοιχείο ακόμα. Γράψε πάνω κάτι που πρέπει να διαβάσεις ή να κάνεις.</div>';
+  $('prog').textContent = n.items.length ? done + '/' + n.items.length : '';
+  $('clear').style.display = done > 0 ? 'inline' : 'none';
+}
+function renderFoot(msg) {
+  var cnt = 0, k;
+  for (k in NOTES) { if (NOTES.hasOwnProperty(k) && hasContent(k)) cnt++; }
+  $('foot').textContent = (msg ? msg + ' · ' : '') + cnt + (cnt === 1 ? ' μάθημα' : ' μαθήματα') + ' με σημειώσεις';
+}
+function renderEditor() {
+  var n = note(CUR);
+  $('text').value = n.text;
+  $('newItem').value = '';
+  renderItems(); renderFoot('');
+}
+function saveNow() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  var n = note(CUR), d = new Date();
+  n.updated = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  post({ type: 'notes', action: 'save', code: CUR, note: { items: n.items, text: n.text, updated: n.updated } });
+  renderFoot('Αποθηκεύτηκε ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()));
+}
+function saveSoon() { if (saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
+
+function switchTo(code) {
+  if (saveTimer) saveNow();           // δεν χάνεται ό,τι πληκτρολογούσες
+  CUR = code || '_';
+  buildSelect(); renderEditor();
+  post({ type: 'notes', action: 'last', code: CUR });
+}
+
+/* ---------- ΑΝΑΖΗΤΗΣΗ ---------- */
+function runSearch() {
+  var q = fold($('q').value.replace(/^\s+|\s+$/g, ''));
+  if (!q) { $('results').className = 'hide'; $('editor').className = ''; return; }
+  var k, h = '', n = 0, codes = [], seen = {};
+  /* όλα τα μαθήματα: όσα έχουν σημειώσεις + όλα του προγράμματος + οι Γενικές */
+  var all = ['_'];
+  for (k in NOTES) { if (NOTES.hasOwnProperty(k)) all.push(k); }
+  for (k in NAMES) { if (NAMES.hasOwnProperty(k)) all.push(k); }
+  for (var u = 0; u < all.length; u++) { if (!seen[all[u]]) { seen[all[u]] = true; codes.push(all[u]); } }
+  codes.sort(function (x, y) { return x === '_' ? -1 : y === '_' ? 1 : (x < y ? -1 : x > y ? 1 : 0); });
+
+  for (var c = 0; c < codes.length && n < 25; c++) {
+    var code = codes[c], nt = NOTES[code] || { items: [], text: '' }, snip = '', i;
+    var ft = fold(nt.text || ''), idx = ft.indexOf(q);
+    if (idx >= 0) {
+      var a = Math.max(0, idx - 30), b = Math.min(nt.text.length, idx + q.length + 50);
+      snip = (a > 0 ? '…' : '') + esc(nt.text.substring(a, idx)) + '<mark>' + esc(nt.text.substring(idx, idx + q.length)) + '</mark>' + esc(nt.text.substring(idx + q.length, b)) + (b < nt.text.length ? '…' : '');
+    }
+    var itemHits = [];
+    for (i = 0; nt.items && i < nt.items.length; i++) { if (fold(nt.items[i].t).indexOf(q) >= 0) itemHits.push((nt.items[i].d ? '☑ ' : '☐ ') + esc(nt.items[i].t)); }
+    var nameHit = code !== '_' && fold(code + ' ' + titleOf(code)).indexOf(q) >= 0;
+    if (!snip && !itemHits.length && !nameHit) continue;
+    n++;
+    var extra = '';
+    if (!snip && !itemHits.length) {
+      extra = '<div class="sn">' + (hasContent(code) ? (nt.items.length ? nt.items.length + ' στοιχεία' : 'Υπάρχουν σημειώσεις') : 'Καμία σημείωση ακόμα · κλικ για να ξεκινήσεις') + '</div>';
+    }
+    h += '<div class="res" data-code="' + esc(code) + '"><b>' + (code === '_' ? '📌' : esc(code)) + '</b> ' + esc(titleOf(code)) + extra +
+      (itemHits.length ? '<div class="sn">' + itemHits.slice(0, 3).join('\n') + '</div>' : '') + (snip ? '<div class="sn">' + snip + '</div>' : '') + '</div>';
+  }
+  $('results').innerHTML = h || '<div class="hint">Κανένα αποτέλεσμα.</div>';
+  $('results').className = ''; $('editor').className = 'hide';
+}
+
+/* ---------- ΣΥΝΔΕΣΗ ΣΥΜΒΑΝΤΩΝ ---------- */
+$('course').onchange = function () { switchTo(this.value); };
+$('q').oninput = runSearch;
+$('text').oninput = function () { note(CUR).text = this.value; saveSoon(); };
+$('newItem').onkeydown = function (e) {
+  if (e.key === 'Enter') {
+    var v = this.value.replace(/^\s+|\s+$/g, '');
+    if (!v) return;
+    note(CUR).items.push({ t: v, d: false });
+    this.value = ''; renderItems(); saveNow();
+  }
+};
+document.addEventListener('click', function (ev) {
+  var t = ev.target, n = 0;
+  while (t && t !== document && n < 4) {
+    if (t.getAttribute) {
+      var i = t.getAttribute('data-i'), rm = t.getAttribute('data-rm'), code = t.getAttribute('data-code');
+      if (i !== null && i !== '') { var it = note(CUR).items[parseInt(i, 10)]; if (it) { it.d = !it.d; renderItems(); saveNow(); } return; }
+      if (rm !== null && rm !== '') { note(CUR).items.splice(parseInt(rm, 10), 1); renderItems(); saveNow(); return; }
+      if (code !== null && code !== '') { $('q').value = ''; runSearch(); switchTo(code); return; }
+      if (t.id === 'clear') {
+        var arr = note(CUR).items, keep = [], j;
+        for (j = 0; j < arr.length; j++) { if (!arr[j].d) keep.push(arr[j]); }
+        note(CUR).items = keep; renderItems(); saveNow(); return;
+      }
+    }
+    t = t.parentNode; n++;
+  }
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('q').value) { $('q').value = ''; runSearch(); } });
+
+/* ---------- ΕΝΤΟΛΕΣ ΑΠΟ ΤΗΝ ΕΦΑΡΜΟΓΗ ---------- */
+window.setCourse = function (code) { switchTo(code && code.length ? code : '_'); };
+window.setAccent = function (hex, rgb) {
+  document.documentElement.style.setProperty('--ac', hex);
+  document.documentElement.style.setProperty('--acrgb', rgb);
+};
+
+buildSelect(); renderEditor();
+</script>
+</body>
+</html>

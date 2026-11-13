@@ -1,0 +1,24 @@
+# --- Visual Studio / .NET ---
+.vs/
+bin/
+obj/
+publish/
+*.user
+*.suo
+*.userprefs
+*.log
+*.tmp
+.idea/
+TestResults/
+*.nupkg
+
+# --- Προσωπικά δεδομένα: ΠΟΤΕ στο GitHub (κανονικά βρίσκονται στο %LocalAppData%\UoiStudyHub) ---
+vault.dat
+save.json
+notes.json
+study_log.json
+my_grades.json
+Curriculum_Dump.json
+error.log
+parse_log.txt
+*.bak

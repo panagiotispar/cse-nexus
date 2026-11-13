@@ -1,0 +1,426 @@
+﻿<Window x:Class="StudyHub.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="CSE Nexus" Height="900" Width="1400" 
+        Background="#05070a" WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI">
+
+    <!-- ΟΡΙΣΜΟΣ STYLES (Cyberpunk Tabs) -->
+    <Window.Resources>
+        <Color x:Key="ThemeColor">#00ffcc</Color>
+        <SolidColorBrush x:Key="ThemeBrush" Color="#00ffcc"/>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#111b24"/>
+            <Setter Property="Foreground" Value="#7f8c8d"/>
+            <Setter Property="BorderBrush" Value="#2c3e50"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+            <Setter Property="Padding" Value="24,10"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ThemeBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#111b24"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ThemeBrush}"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="1,1,1,3"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeBrush}"/>
+                                <Setter TargetName="Border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="{DynamicResource ThemeColor}" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <!-- ΚΡΥΦΑ ΣΤΟΙΧΕΙΑ ΜΗΧΑΝΙΣΜΩΝ ΣΤΟ BACKGROUND -->
+        <wv2:WebView2 x:Name="ScannerBrowser" Visibility="Collapsed" />
+        <Button x:Name="BtnExtract" Visibility="Collapsed"/>
+        <TextBox x:Name="TxtUsername" Visibility="Collapsed"/>
+        <PasswordBox x:Name="TxtPassword" Visibility="Collapsed"/>
+
+        <!-- ================== CONTROL CENTER (SIDE RAIL) ================== -->
+        <Border x:Name="SidePanel" Grid.Column="0" Width="64" Margin="30,30,0,30" Background="#0a0e17" BorderBrush="#1a2536" BorderThickness="1" CornerRadius="14" ClipToBounds="True">
+            <Grid>
+                <!-- Συμπτυγμένη μορφή: εικονίδια -->
+                <StackPanel x:Name="RailCollapsedView" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,14,0,0">
+                    <Border Width="40" Height="40" CornerRadius="10" Background="#111b24" Cursor="Hand" ToolTip="Άνοιγμα Control Center" MouseLeftButtonUp="Rail_Toggle_Click">
+                        <TextBlock Text="☰" FontSize="18" Foreground="#bdc3c7" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border Width="40" Height="40" CornerRadius="10" Background="#111b24" Margin="0,14,0,0" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="1" Cursor="Hand" ToolTip="Active HUD" MouseLeftButtonUp="Rail_Toggle_Click">
+                        <TextBlock x:Name="RailAvatar" Text="🥚" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="RailTmIcon" Width="40" Height="40" CornerRadius="10" Background="#111b24" Margin="0,10,0,0" BorderBrush="#2c3e50" BorderThickness="1" Cursor="Hand" ToolTip="Time Machine" MouseLeftButtonUp="Rail_Toggle_Click">
+                        <TextBlock Text="⏳" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border Width="40" Height="40" CornerRadius="10" Background="#111b24" Margin="0,10,0,0" BorderBrush="#2c3e50" BorderThickness="1" Cursor="Hand" ToolTip="Appearance" MouseLeftButtonUp="Rail_Toggle_Click">
+                        <TextBlock Text="🎨" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Ανοιχτή μορφή: πάνελ -->
+                <ScrollViewer x:Name="RailExpandedView" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="16">
+
+                        <Grid>
+                            <TextBlock Text="CONTROL CENTER" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <Border HorizontalAlignment="Right" Width="30" Height="30" CornerRadius="8" Background="#111b24" Cursor="Hand" ToolTip="Σύμπτυξη" MouseLeftButtonUp="Rail_Toggle_Click">
+                                <TextBlock Text="«" FontSize="16" Foreground="#bdc3c7" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- ACTIVE HUD -->
+                        <Border Background="#0d1520" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,16,0,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="HudAvatar" Text="🥚" FontSize="38" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="HudGpa" Text="0.00" Foreground="#f1c40f" FontFamily="Consolas" FontSize="24" FontWeight="Bold"/>
+                                            <TextBlock Text=" GPA" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" VerticalAlignment="Bottom" Margin="4,0,0,4"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="HudRank" Text="-" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="160"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Grid Margin="0,14,0,5">
+                                    <TextBlock x:Name="HudLevel" Text="LVL 1" Foreground="#ecf0f1" FontFamily="Consolas" FontSize="12"/>
+                                    <TextBlock x:Name="HudXpText" Text="0/30 XP" Foreground="#f39c12" FontFamily="Consolas" FontSize="12" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <ProgressBar x:Name="HudXpBar" Minimum="0" Maximum="30" Value="0" Height="6" Foreground="#f1c40f" Background="#111b24" BorderBrush="#34495e" BorderThickness="1"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- TIME MACHINE -->
+                        <Border Background="#0d1520" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,14,0,0">
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="⏳ TIME MACHINE" Foreground="#f1c40f" FontFamily="Consolas" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    <Border x:Name="TmToggle" HorizontalAlignment="Right" Background="#1a2530" CornerRadius="10" Padding="12,3" Cursor="Hand" MouseLeftButtonUp="TmToggle_Click">
+                                        <TextBlock x:Name="TmToggleText" Text="OFF" FontFamily="Consolas" FontSize="12" FontWeight="Bold" Foreground="#7f8c8d"/>
+                                    </Border>
+                                </Grid>
+                                <TextBlock Text="Πάτα μια εξεταστική για να δεις το προφίλ σου όπως ήταν τότε." Foreground="#7f8c8d" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,12"/>
+                                <StackPanel x:Name="TimelinePanel"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- APPEARANCE -->
+                        <Border Background="#0d1520" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,14,0,0">
+                            <StackPanel>
+                                <TextBlock Text="🎨 APPEARANCE" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                <WrapPanel x:Name="ThemeSwatchPanel" Margin="0,12,0,8"/>
+                                <Border BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="1" CornerRadius="6" Background="#0a0e17" Height="28">
+                                    <Grid>
+                                        <TextBlock x:Name="TerminalHint" Text="&gt;_ command" Foreground="#4b5a66" FontFamily="Consolas" FontSize="13" VerticalAlignment="Center" Margin="8,0" IsHitTestVisible="False"/>
+                                        <TextBox x:Name="TerminalInput" Background="Transparent" Foreground="{DynamicResource ThemeBrush}" CaretBrush="{DynamicResource ThemeBrush}" BorderThickness="0" FontFamily="Consolas" FontSize="13" VerticalContentAlignment="Center" Padding="6,0" TextChanged="TerminalInput_TextChanged" KeyDown="TerminalInput_KeyDown"/>
+                                    </Grid>
+                                </Border>
+                                <TextBlock x:Name="TerminalStatus" Foreground="#f1c40f" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- MEMORY CARD -->
+                        <Border Background="#0d1520" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,14,0,0">
+                            <StackPanel>
+                                <TextBlock Text="💾 MEMORY CARD" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Ellipse Width="8" Height="8" Fill="#2ecc71" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Αυτόματη αποθήκευση: ΕΝΕΡΓΗ" Foreground="#2ecc71" FontFamily="Consolas" FontSize="11"/>
+                                </StackPanel>
+                                <TextBlock x:Name="SaveStatusText" Text="Δεν έχει γίνει αλλαγή ακόμα" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="11" Margin="0,4,0,10"/>
+                                <Border Background="#111b24" CornerRadius="6" Padding="10,5" Cursor="Hand" HorizontalAlignment="Left" MouseLeftButtonUp="BtnOpenSaveFolder_Click">
+                                    <TextBlock Text="📂 Άνοιγμα φακέλου save" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="11"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ACCOUNT -->
+                        <Border Background="#0d1520" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,14,0,0">
+                            <StackPanel>
+                                <TextBlock Text="👤 ΛΟΓΑΡΙΑΣΜΟΣ" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Ellipse x:Name="AuthDot" Width="8" Height="8" Fill="#7f8c8d" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock x:Name="AuthStatusText" Text="Έλεγχος σύνδεσης..." Foreground="#ecf0f1" FontFamily="Consolas" FontSize="12"/>
+                                </StackPanel>
+                                <TextBlock x:Name="AuthUserText" Visibility="Collapsed" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Border x:Name="BtnSyncNow" Visibility="Collapsed" Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,8,6" Cursor="Hand" MouseLeftButtonUp="AuthSync_Click">
+                                        <TextBlock Text="🔄 Συγχρονισμός" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="11"/>
+                                    </Border>
+                                    <Border x:Name="BtnLoginOpen" Visibility="Collapsed" Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,8,6" Cursor="Hand" MouseLeftButtonUp="AuthLogin_Click">
+                                        <TextBlock Text="🔐 Σύνδεση" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="11"/>
+                                    </Border>
+                                    <Border x:Name="BtnLogout" Visibility="Collapsed" Background="#1f0d10" BorderBrush="#e74c3c" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,8,6" Cursor="Hand" MouseLeftButtonUp="AuthLogout_Click">
+                                        <TextBlock Text="🔌 Αποσύνδεση" Foreground="#e74c3c" FontFamily="Consolas" FontSize="11"/>
+                                    </Border>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- ΒΑΣΙΚΟ LAYOUT (Header + Tabs) -->
+        <Grid x:Name="MainContent" Grid.Column="1" Margin="12,30,30,30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- GLOBAL TYPEWRITER HEADER -->
+            <Grid Grid.Row="0" Height="60" Margin="0,0,0,20">
+                <wv2:WebView2 x:Name="TypewriterBrowser"/>
+            </Grid>
+
+            <!-- TIME MACHINE BANNER -->
+            <Border x:Name="TimeMachineBanner" Grid.Row="1" Visibility="Collapsed" Margin="0,0,0,14" Padding="16,10" CornerRadius="10" Background="#1f0d10" BorderBrush="#e74c3c" BorderThickness="1">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="⏳" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="TIMELINE ALTERED" Foreground="#e74c3c" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                            <TextBlock x:Name="TimeMachineBannerText" Foreground="#ecf0f1" FontFamily="Consolas" FontSize="12"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#e74c3c" CornerRadius="6" Padding="14,6" Cursor="Hand" MouseLeftButtonUp="BtnTmReturn_Click">
+                        <TextBlock Text="ΕΠΙΣΤΡΟΦΗ ΣΤΟ ΠΑΡΟΝ" Foreground="White" FontFamily="Consolas" FontSize="12" FontWeight="Bold"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- ΚΕΝΤΡΙΚΟ TAB CONTROL -->
+            <TabControl Grid.Row="2" x:Name="MainTabControl" SelectionChanged="MainTabControl_SelectionChanged">
+
+                <!-- ================== TAB 1: BASE CAMP ================== -->
+                <TabItem Header="🏠 Base Camp">
+                    <Grid Margin="0,20,0,0">
+                        <Border Background="#0b101a" CornerRadius="8" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="3">
+                            <wv2:WebView2 x:Name="BaseCampBrowser" />
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ================== TAB 2: ANALYTICS ================== -->
+                <TabItem Header="📈 Analytics Engine">
+                    <Grid Margin="0,20,0,0">
+                        <Border Background="#0b101a" CornerRadius="8" BorderBrush="#ff007f" BorderThickness="3">
+                            <wv2:WebView2 x:Name="ChartBrowser" />
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ================== TAB 3: 3D SPACE ================== -->
+                <TabItem Header="🌌 3D Space &amp; Timeline">
+                    <Grid Margin="0,20,0,0">
+                        <Border Background="#0b101a" CornerRadius="8" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="3">
+                            <wv2:WebView2 x:Name="SpaceBrowser" />
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ================== TAB 4: SIMULATOR ================== -->
+                <TabItem Header="🔮 Simulator">
+                    <Grid Margin="0,20,0,0">
+                        <Border Background="#0b101a" CornerRadius="8" BorderBrush="#9b59b6" BorderThickness="3">
+                            <wv2:WebView2 x:Name="SimulatorBrowser" />
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <!-- ================== TAB 5: STUDY HUB ================== -->
+                <TabItem Header="🧠 Study Hub">
+                    <Grid Margin="0,20,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0" Margin="0,0,10,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                                <TextBlock Text="📝 Memory Buffer" Foreground="#e74c3c" FontFamily="Consolas" FontSize="18" FontWeight="Bold"/>
+                                <TextBlock Text="Προσωρινή μνήμη για SOS, ιδέες ή bugs." Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Border Grid.Row="1" Background="#05070a" BorderBrush="#1a252f" BorderThickness="1" CornerRadius="6">
+                                <Border BorderBrush="#e74c3c" BorderThickness="4,0,0,0" CornerRadius="4,0,0,4">
+                                    <Grid>
+                                        <TextBlock x:Name="MemoryPlaceholder" Text="&gt; Γράψε εδώ... π.χ.&#x0a;- Να δω τον αλγόριθμο Dijkstra&#x0a;- Κεφάλαιο 4, σελ. 112 SOS&#x0a;- Fix line 45 στο script" Foreground="#2c3e50" FontFamily="Consolas" FontSize="15" Padding="15" IsHitTestVisible="False"/>
+                                        <TextBox x:Name="MemoryBufferText" Background="Transparent" Foreground="{DynamicResource ThemeBrush}" FontFamily="Consolas" FontSize="15" BorderThickness="0" TextWrapping="Wrap" AcceptsReturn="True" Padding="15" CaretBrush="{DynamicResource ThemeBrush}" TextChanged="MemoryBufferText_TextChanged"/>
+                                    </Grid>
+                                </Border>
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Column="1" Margin="10,0,10,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                                <TextBlock Text="⏳ Focus Core" Foreground="{DynamicResource ThemeBrush}" FontFamily="Consolas" FontSize="18" FontWeight="Bold"/>
+                                <TextBlock Text="Διαχείριση χρόνου και Deep Dive cycles." Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Border Grid.Row="1" CornerRadius="8" Background="#0b101a" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="2">
+                                <wv2:WebView2 x:Name="PomodoroBrowser" />
+                            </Border>
+                            <Border Grid.Row="2" Background="#111b24" CornerRadius="6" Padding="15" Margin="0,15,0,0">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="🔒 💡" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Foreground="#bdc3c7" FontSize="13" VerticalAlignment="Center" FontFamily="Segoe UI">
+                                        <Run FontWeight="Bold" Foreground="#ecf0f1">Focus Tip:</Run>
+                                        <Run>Όσο το Focus Core είναι κόκκινο, βάλε το κινητό σε DND.</Run>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Column="2" Margin="10,0,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                                <TextBlock Text="📻 Cyber-Radio" Foreground="#f39c12" FontFamily="Consolas" FontSize="18" FontWeight="Bold"/>
+                                <TextBlock Text="Analog Frequency Tuner." Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Border Grid.Row="1" CornerRadius="8" Background="#0b101a" BorderBrush="#f39c12" BorderThickness="2">
+                                <wv2:WebView2 x:Name="RadioBrowser" />
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <!-- ================== TAB 6: CO-OP MODE ================== -->
+                <TabItem Header="⚔️ Co-op Mode">
+                    <Grid Margin="0,20,0,0">
+                        <Border Background="#0b101a" CornerRadius="8" BorderBrush="#f1c40f" BorderThickness="3">
+                            <wv2:WebView2 x:Name="CoopBrowser" />
+                        </Border>
+                    </Grid>
+                </TabItem>
+                <!-- ================== TAB 7: SCHEDULE ================== -->
+                <TabItem Header="📅 Schedule">
+                    <Grid Margin="0,20,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#0a0e17" BorderBrush="#1a2536" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                                    <TextBlock x:Name="ScheduleTitle" Text="📅 Live Πρόγραμμα Τμήματος" Foreground="#ecf0f1" FontFamily="Consolas" FontSize="16" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="ScheduleStatus" Text="Φόρτωση..." Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border x:Name="BtnSchedLectures" Tag="lectures" Background="#f1c40f" BorderBrush="#f1c40f" BorderThickness="1" CornerRadius="8" Padding="14,7" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonUp="SchedKind_Click">
+                                        <TextBlock Text="📘 Μαθήματα" Foreground="Black" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border x:Name="BtnSchedLabs" Tag="labs" Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="8" Padding="14,7" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonUp="SchedKind_Click">
+                                        <TextBlock Text="🧪 Εργαστήρια" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border x:Name="BtnSchedExams" Tag="exams" Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="8" Padding="14,7" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonUp="SchedKind_Click">
+                                        <TextBlock Text="📝 Εξεταστική" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border x:Name="BtnSchedGraphic" Tag="graphic" Background="{DynamicResource ThemeBrush}" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="1" CornerRadius="8" Padding="12,7" Margin="12,0,6,0" Cursor="Hand" MouseLeftButtonUp="SchedMode_Click">
+                                        <TextBlock Text="🎨 Γραφικό" Foreground="Black" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border x:Name="BtnSchedPdf" Tag="pdf" Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="8" Padding="12,7" Cursor="Hand" MouseLeftButtonUp="SchedMode_Click">
+                                        <TextBlock Text="📄 PDF" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13" FontWeight="Bold"/>
+                                    </Border>
+                                    <Border Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="8" Padding="12,7" Margin="12,0,8,0" Cursor="Hand" ToolTip="Έλεγχος για νέα έκδοση στο site του Τμήματος" MouseLeftButtonUp="SchedRefresh_Click">
+                                        <TextBlock Text="🔄 Ανανέωση" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13"/>
+                                    </Border>
+                                    <Border Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="8" Padding="12,7" Cursor="Hand" ToolTip="Άνοιγμα στο προεπιλεγμένο πρόγραμμα PDF" MouseLeftButtonUp="SchedExternal_Click">
+                                        <TextBlock Text="↗ Εξωτερικά" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13"/>
+                                    </Border>
+                                    <Border Background="#111b24" BorderBrush="#2c3e50" BorderThickness="1" CornerRadius="8" Padding="12,7" Margin="8,0,0,0" Cursor="Hand" ToolTip="Εξαγωγή σε Google Calendar / Outlook (.ics)" MouseLeftButtonUp="SchedExportIcs_Click">
+                                        <TextBlock Text="📅 Εξαγωγή .ics" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="13"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="1" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="2" CornerRadius="10" Background="#05070a">
+                            <wv2:WebView2 x:Name="ScheduleBrowser"/>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+            </TabControl>
+        </Grid>
+
+        <!-- ================== ΟΘΟΝΗ ΣΥΝΔΕΣΗΣ ================== -->
+        <Grid x:Name="LoginPanel" Grid.Column="1" Visibility="Collapsed" Margin="12,30,30,30">
+            <Border Width="460" VerticalAlignment="Center" HorizontalAlignment="Center" Background="#0a0e17" BorderBrush="{DynamicResource ThemeBrush}" BorderThickness="1" CornerRadius="16" Padding="32">
+                <StackPanel>
+                    <TextBlock Text="🔐" FontSize="44" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Σύνδεση στο ClassWeb" Foreground="#ecf0f1" FontFamily="Consolas" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,8,0,4"/>
+                    <TextBlock Text="Τα στοιχεία σου στέλνονται μόνο στο sso.uoi.gr (το επίσημο σύστημα του Πανεπιστημίου)." Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,22"/>
+
+                    <TextBlock Text="ΟΝΟΜΑ ΧΡΗΣΤΗ" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="11" FontWeight="Bold"/>
+                    <TextBox x:Name="LoginUser" Background="#111b24" Foreground="White" CaretBrush="White" BorderBrush="#2c3e50" FontFamily="Consolas" FontSize="15" Padding="10,8" Margin="0,5,0,14"/>
+
+                    <TextBlock Text="ΚΩΔΙΚΟΣ" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="11" FontWeight="Bold"/>
+                    <PasswordBox x:Name="LoginPass" Background="#111b24" Foreground="White" CaretBrush="White" BorderBrush="#2c3e50" FontFamily="Consolas" FontSize="15" Padding="10,8" Margin="0,5,0,14" KeyDown="LoginPass_KeyDown"/>
+
+                    <CheckBox x:Name="LoginRemember" Content="Να θυμάμαι τα στοιχεία (κρυπτογραφημένα στον υπολογιστή μου)" IsChecked="True" Foreground="#bdc3c7" FontFamily="Consolas" FontSize="12" Margin="0,0,0,14"/>
+
+                    <TextBlock x:Name="LoginError" Visibility="Collapsed" Foreground="#e74c3c" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                    <TextBlock x:Name="LoginBusy" Visibility="Collapsed" Text="⏳ Σύνδεση..." Foreground="#f1c40f" FontFamily="Consolas" FontSize="12" Margin="0,0,0,12"/>
+
+                    <Border Background="{DynamicResource ThemeBrush}" CornerRadius="8" Padding="14,10" Cursor="Hand" MouseLeftButtonUp="BtnLogin_Click">
+                        <TextBlock Text="Σύνδεση" Foreground="#05070a" FontFamily="Consolas" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </Border>
+
+                    <TextBlock Text="Συνέχεια χωρίς σύνδεση (μόνο τοπικά δεδομένα)" Foreground="#7f8c8d" FontFamily="Consolas" FontSize="12" HorizontalAlignment="Center" Cursor="Hand" Margin="0,16,0,0" MouseLeftButtonUp="BtnLoginSkip_Click"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- SPLASH SCREEN OVERLAY -->
+        <Grid x:Name="SplashScreenOverlay" Grid.ColumnSpan="2" Visibility="Visible" Panel.ZIndex="9999" Background="#05070a">
+            <wv2:WebView2 x:Name="SplashBrowser" />
+        </Grid>
+    </Grid>
+</Window>

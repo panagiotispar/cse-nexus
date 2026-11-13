@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<ApplicationIcon>app.ico</ApplicationIcon>
+		<Version>1.0.0</Version>
+		<Product>CSE Nexus</Product>
+		<AssemblyName>CSE Nexus</AssemblyName>
+		<Description>Εφαρμογή στατιστικών, προγράμματος και μελέτης για φοιτητές ΤΜΗΥΠ ΠΙ</Description>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2422.46" />
+		<PackageReference Include="PdfPig" Version="0.1.16" />
+		<PackageReference Include="ScottPlot.WPF" Version="5.0.39" />
+		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="focus.html">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="notes.html">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="schedule.html">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+</Project>
