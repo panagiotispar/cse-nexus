@@ -11,6 +11,7 @@ publish/
 .idea/
 TestResults/
 *.nupkg
+release/
 
 # --- Προσωπικά δεδομένα: ΠΟΤΕ στο GitHub (κανονικά βρίσκονται στο %LocalAppData%\UoiStudyHub) ---
 vault.dat
