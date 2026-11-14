@@ -461,7 +461,7 @@ namespace StudyHub.Desktop
                 @keyframes typing { from { width: 0; } to { width: 100%; } }
                 @keyframes blink-caret { from, to { border-color: transparent; } 50% { border-color: #00ffcc; } }
             </style></head><body>
-                <div class='typewriter-text'>root@cse-uoi:~$ ./cse-nexus.exe</div>
+                <div class='typewriter-text'>root@cse-uoi:~$ ./cse_nexus.exe</div>
             </body></html>";
 
             _typewriterHtmlRaw = typewriterHtml;
