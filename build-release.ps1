@@ -49,7 +49,7 @@ $sizeMb = [math]::Round($exe.Length / 1MB, 1)
 Write-Host "Εκτελέσιμο: $($exe.Name) ($sizeMb MB). Όλα τα αρχεία υπάρχουν."
 
 # 4) Πακετάρισμα + άθροισμα ελέγχου
-$zipName = "UOI-Study-Hub-v$Version-win-x64.zip"
+$zipName = "CSE-Nexus-v$Version-win-x64.zip"
 $zipPath = Join-Path $release $zipName
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 Compress-Archive -Path (Join-Path $publish '*') -DestinationPath $zipPath

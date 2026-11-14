@@ -59,7 +59,7 @@ jobs:
       - name: Πακετάρισμα
         shell: pwsh
         run: |
-          $zip = "UOI-Study-Hub-${{ github.ref_name }}-win-x64.zip"
+          $zip = "CSE-Nexus-${{ github.ref_name }}-win-x64.zip"
           Compress-Archive -Path "publish\*" -DestinationPath $zip
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
           "$hash  $zip" | Out-File -FilePath SHA256SUMS.txt -Encoding ascii
@@ -70,7 +70,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            UOI-Study-Hub-*.zip
+            CSE-Nexus-*.zip
             SHA256SUMS.txt
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
@@ -81,5 +81,5 @@ jobs:
         with:
           name: test-build
           path: |
-            UOI-Study-Hub-*.zip
+            CSE-Nexus-*.zip
             SHA256SUMS.txt
